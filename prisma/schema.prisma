@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  name      String
+  role      String    @default("member") // admin, member
+  avatar    String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  customers   Customer[]
+  followUps   FollowUp[]
+}
+
+model Customer {
+  id           Int       @id @default(autoincrement())
+  companyName  String    // 公司名称
+  contact      String    // 联系人
+  phone        String    // 电话
+  email        String?   // 邮箱
+  position     String?   // 职位
+  source       String    // 客户来源
+  industry     String?   // 行业
+  companySize  String?   // 公司规模
+  revenue      String?   // 年营业额
+  address      String?   // 地址
+  remark       String?   // 备注
+  level        String    @default("C") // A/B/C/D 客户分级
+  ownerId      Int
+  owner        User      @relation(fields: [ownerId], references: [id])
+  groupId      Int?      
+  group        CustomerGroup? @relation(fields: [groupId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  followUps    FollowUp[]
+  tags         CustomerTag[]
+}
+
+model CustomerGroup {
+  id          Int        @id @default(autoincrement())
+  name        String     // 分组名称
+  color       String     @default("#7C3AED") // 分组颜色
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  customers   Customer[]
+}
+
+model Tag {
+  id          Int        @id @default(autoincrement())
+  name        String     // 标签名称
+  color       String     @default("#7C3AED") // 标签颜色
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  customers   CustomerTag[]
+}
+
+model CustomerTag {
+  id         Int      @id @default(autoincrement())
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tagId      Int
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, tagId])
+}
+
+model FollowUp {
+  id           Int       @id @default(autoincrement())
+  customerId   Int
+  customer     Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type         String    // 电话/邮件/面谈/微信/会议/其他
+  content      String    // 跟进内容
+  nextFollowUp DateTime? // 下次跟进时间
+  createdById  Int
+  createdBy    User      @relation(fields: [createdById], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
